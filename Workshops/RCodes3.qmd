@@ -1,0 +1,155 @@
+---
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r}
+# data manipulation
+library(tidyverse)
+# birthwt data
+library(MASS)
+# draw dag
+library(dagitty)
+```
+
+# Paradox I
+
+Suppose you collect data on intelligence and diligence among students.
+Further suppose that aptitude is a function of intelligence and diligence.
+We define students with high aptitude as "good students."
+
+```{r}
+# data for Berkson's paradox
+set.seed(2023)  
+N <- 1000
+intelligence <- rnorm(N)
+diligence. <-  rnorm(N)
+aptitude <- 1/2 * intelligence + 1/2 * diligence. + rnorm(N, 0, .1)
+
+df_1 <- data.frame(intelligence = intelligence,
+                         diligence. = diligence.,
+                         aptitude = aptitude) %>% 
+  mutate(good_students = aptitude > 0)
+```
+
+1.  Among good students, visualize and describe the relationship between intelligence and diligence.
+
+```{r}
+good_students <- filter(df_1, good_students)
+ggplot(good_students, aes(x=intelligence, y=diligence.)) +
+  geom_point() +
+  geom_smooth(method=lm, color= "orange") +
+  labs(title="Intelligence vs Diligence among Good Students", subtitle="There is a somewhat linear and negative relationship between intelligence and 
+diligence among good students", x="Intelligence", y="Diligence")
+
+```
+
+2.  Using the whole population, visualize and describe the relationship between intelligence and diligence.
+
+```{r}
+ggplot(df_1, aes(x=intelligence, y=diligence.)) +
+  geom_point() +
+  geom_smooth(method=lm) + 
+  labs(title="Intelligence vs Diligence among all students", subtitle="There is no pattern between intelligence and diligence among the entire student population ", x="Intelligence", y="Diligence")
+```
+
+3.  How do you resolve this paradox? Use visualization.
+
+```{r}
+ggplot(df_1, aes(x=intelligence, y=diligence., colour = good_students)) +
+  geom_point() +
+  geom_smooth(method=lm) + 
+  labs(title="Intelligence vs Diligence among all students", subtitle="", x="Intelligence", y="Diligence", colour= "Good Students")
+```
+
+4.  Draw a DAG to explain this paradox.
+
+```{r}
+dag {
+Aptitude
+[outcome,pos="-0.382,-0.395"]
+Diligence
+[selected,pos="0.437,-0.133"]
+Intelligence 
+[selected,pos="-1.107,-0.135"]
+Diligence -> Aptitude 
+Intelligence -> Aptitude
+}
+
+```
+
+# Paradox II
+
+```{r}
+data(birthwt)
+glimpse(birthwt)
+```
+
+1.  Calculate the proportion of low birth weight (LBW) infant by mother's smoking status. Is this what you expected?
+
+```{r}
+```
+
+2.  Visually investigate whether age plays an important role. What do you observe?
+
+```{r}
+```
+
+3.  Draw a DAG explaining this phenomena. Help: https://cran.r-project.org/web/packages/dagitty/vignettes/dagitty4semusers.html
+
+```{r}
+# modify this
+g1 <- dagitty("dag {
+    W1 -> Z1 -> X -> Y
+    Z1 <- V -> Z2
+    W2 -> Z2 -> Y
+    X <-> W1 <-> W2 <-> Y
+}")
+plot(graphLayout(g1))
+```
+
+# Paradox III
+
+Students are assigned to a diet program.
+To evaluate the program, you measure their weights before (pre-intervention) and after the program (post-intervention).
+
+Suppose Analyst A uses the change in weight as the response variable.
+On the other hand, Analyst B uses the post-intervention weight as the response variable but conditions on (or controls/adjusts for) the pre-intervention weight.
+
+```{r data}
+set.seed(2023)
+N <- 1000
+ 
+b <- 10
+l <- 50
+u <- 70
+Male <- runif(N, l, u)
+Female <- Male + b
+ 
+b1 <- 0.5
+b0_M <- (1 - b1) * mean(Male)
+b0_F <- mean(Female) - b1 * (mean(Male) + b)
+ 
+sd <- 1
+Male1 <- b0_M + b1 * Male + rnorm(N, sd=sd)
+Female1 <- b0_F + b1 * Female + rnorm(N, sd=sd)
+
+df_2 <- data.frame(pre = c(Male, Female), post = c(Male1, Female1))
+df_2$sex <- c(rep("Male", N), rep("Female", N))
+```
+
+1.  Visualize Analyst 1's approach. What is their conclusion?
+
+```{r}
+```
+
+2.  Visualize Analyst 2's approach. What is their conclusion?
+
+```{r}
+```
+
+3.  Draw a DAG to explain their approaches.
+
+```{r}
+```
