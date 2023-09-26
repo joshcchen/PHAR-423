@@ -78,5 +78,5 @@ df_grouped %>%
 
 ```{r visualization}
 ggplot(data=df,aes(x=sex,y=age)) +
-  geom_point()
+  geom_boxplot()
 ```

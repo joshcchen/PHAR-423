@@ -373,14 +373,19 @@ We finally have a plot that perfectly matches our "ultimate goal"!
     ```{r}
     ggplot(data=penguins,mapping=aes(x=bill_length_mm, y=bill_depth_mm, colour=species))+
       geom_point() + 
-      geom_smooth(method="lm")
+      geom_smooth(method="lm")+
+      labs(title="Bill Length vs Bill Depth", subtitle="For all 3 penguin species, bill length is positively associated with bill depth", x="Bill Length (mm)", y="Bill Depth (mm)", colour="Species")
     ```
 
 4.  What happens if you make a scatterplot of `species` vs. `bill_depth_mm`?
     What might be a better choice of geom?
 
     ```{r}
-    ggplot(penguins, aes(x=species, y=bill_depth_mm)) + geom_violin()
+    ggplot(penguins, aes(x=species, y=bill_depth_mm, colour=species)) + 
+      geom_point()
+    ggplot(penguins, aes(x=species, y=bill_depth_mm, colour=species)) +
+      geom_boxplot() +
+      labs(subtitle="A boxplot is a better choice to display the distribution of bill depth among differnt penguin species")
     ```
 
 5.  Why does the following give an error and how would you fix it?
@@ -388,15 +393,30 @@ We finally have a plot that perfectly matches our "ultimate goal"!
     ```{r}
     #| eval: false
 
-    ggplot(data = penguins, aes(sex, body_mass_g)) + 
-      geom_boxplot()
+    penguins_filtered <- filter(penguins, sex=="male"|sex=="female")
+    ggplot(data = penguins_filtered, aes(sex, body_mass_g)) + 
+      geom_boxplot(aes(colour=sex))
     ```
 
 6.  What does the `na.rm` argument do in `geom_point()`?
     What is the default value of the argument?
     Create a scatterplot where you successfully use this argument set to `TRUE`.
 
+    The na.rm arguement, meaning "n/a remove", prevents n/a values in the data from being included in the geom_point() scatterplot.
+    na.rm = FALSE by default
+
+    ```{r}
+    ggplot(penguins, aes(x=body_mass_g, y=bill_depth_mm, colour=species)) + 
+      geom_point(na.rm=TRUE)
+    ```
+
 7.  Add the following caption to the plot you made in the previous exercise: "Data come from the palmerpenguins package." Hint: Take a look at the documentation for `labs()`.
+
+    ```{r}
+    ggplot(penguins, aes(x=body_mass_g, y=bill_depth_mm, colour=species)) + 
+      geom_point(na.rm=TRUE) +
+      labs(caption="Data come from the palmerpenguins package.")
+    ```
 
 8.  Recreate the following visualization.
     What aesthetic should `bill_depth_mm` be mapped to?
@@ -411,11 +431,13 @@ We finally have a plot that perfectly matches our "ultimate goal"!
     #|   and flipper length is overlaid. The relationship is positive, 
     #|   fairly linear, and moderately strong.
 
+    #| bill_depth_mm should be mapped to colour to represent it as a continuous variable at the local geom_point level
+
     ggplot(
       data = penguins,
       mapping = aes(x = flipper_length_mm, y = body_mass_g)
     ) +
-      geom_point(aes(color = bill_depth_mm)) +
+      geom_point(aes(colour = bill_depth_mm)) +
       geom_smooth()
     ```
 
@@ -424,6 +446,9 @@ We finally have a plot that perfectly matches our "ultimate goal"!
 
     ```{r}
     #| eval: false
+
+    #| PREDICTION: A scatterplot plotting flipper_length_mm vs body_mass_g with colours indicating which island the penguin data point is from. A smooth line will overlay to display the positive relationship of flipper length to body mass.
+    #| RESULT: Prediction was relatively close, but did not consider that island is a globally mapped aesthetic. geom_smooth therefore shows 1 line for each island, with relatively positve linear relationships except for data from Torgersen island.
 
     ggplot(
       data = penguins,
@@ -438,6 +463,8 @@ We finally have a plot that perfectly matches our "ultimate goal"!
 
     ```{r}
     #| eval: false
+
+    #| PREDICTION: The two graphs should look identical. The first code globally sets the data source and x and y variables, whie the second code does the same but locally instead for each geom
 
     ggplot(
       data = penguins,
@@ -596,11 +623,20 @@ ggplot(penguins, aes(x = body_mass_g)) +
 1.  Make a bar plot of `species` of `penguins`, where you assign `species` to the `y` aesthetic.
     How is this plot different?
 
+    ```{r}
+    ggplot(penguins, aes(,y=species)) +
+      geom_bar()
+
+    #| Assigning species to the y axis creates a horizontal bar graph
+    ```
+
 2.  How are the following two plots different?
     Which aesthetic, `color` or `fill`, is more useful for changing the color of bars?
 
     ```{r}
     #| eval: false
+
+    #| the fill aesthetic is more useful as it changes the entire colour of the bars instead of just the outlining it like the colour aesthetic
 
     ggplot(penguins, aes(x = species)) +
       geom_bar(color = "red")
@@ -611,9 +647,23 @@ ggplot(penguins, aes(x = body_mass_g)) +
 
 3.  What does the `bins` argument in `geom_histogram()` do?
 
+    ```{r}
+    ggplot(penguins, aes(x=bill_depth_mm)) +
+      geom_histogram(bins=35)
+
+    #| The bins argument sets the amount of bars/bins in the histogram
+    ```
+
 4.  Make a histogram of the `carat` variable in the `diamonds` dataset that is available when you load the tidyverse package.
     Experiment with different binwidths.
     What binwidth reveals the most interesting patterns?
+
+    ```{r}
+    ggplot(diamonds, aes(x=carat)) +
+      geom_histogram(binwidth=0.09)
+
+    #| binwidth = 0.08 to 0.1 displays differing level of detail in the distribution of carats, generally being left-skewed. 
+    ```
 
 ## Visualizing relationships
 
