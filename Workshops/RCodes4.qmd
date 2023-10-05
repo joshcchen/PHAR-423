@@ -1,0 +1,155 @@
+---
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r}
+# data manipulation
+library(tidyverse)
+# tidy models
+library(tidymodels)
+```
+
+# References
+
+* https://www.tmwr.org/base-r
+
+# Learning objectives
+
+* Learn how to fit an ordinary regression model in R
+
+* Learn how to use the tidymodel workflow
+
+# A primer on regression modeling
+
+First import the GUSTO trial data.
+
+```{r gusto}
+df_gusto <- read_csv("data/gusto.csv")
+```
+
+To fit an ordinary linear model in R, the lm() function is commonly used. The important arguments to this function are a model formula and a data frame that contains the data. The formula is symbolic. For example, the simple formula:
+
+```{r formula}
+lm_formula <- as.formula("day30 ~ sex")
+lm_formula
+```
+
+specifies that the 30-day mortality is the outcome (since it is on the left-hand side of the tilde ~) and that the age value is the predictor. Suppose we want to add sex as another predictor. The formula:
+
+```{r updated formula}
+lm_formula <- as.formula("day30 ~ sex + age")
+lm_formula
+```
+
+would not add the sex and age values together. This formula would symbolically represent that sex and age should be added as separate *main effects* to the model. A main effect is a model term that contains a single predictor variable.
+
+```{r fit the model}
+lm_fit <- lm(lm_formula, data = df_gusto)
+```
+
+Or equivalently,
+
+```{r fit the model w/o formula object}
+lm_fit <- lm(formula = day30 ~ sex + age, data = df_gusto)
+```
+
+To get the parameter estimates, you can use the summary function:
+```{r summary}
+summary(lm_fit)
+```
+
+To make predictions with the model, we use the predict function. The important arguments are model object and dataset for which you want to make predictions on. If you do not specify the new data, it will make predictions on the dataset used to fit the model.
+
+```{r predict}
+lm_pred <- predict(lm_fit)
+plot(df_gusto$day30,lm_pred)
+```
+
+A new dataset must be in the same format as the original data (i.e., same names and same data types).
+
+```{r new}
+df_new <- data.frame(sex=c("male","female"),age=c(1,99))
+lm_new_pred <- predict(lm_fit,newdata = df_new)
+lm_new_pred
+```
+
+# Tidymodels
+
+*tidymodels* is a collection of packages for modeling. There are different packages for different models, developed by different people. tidymodels makes it easier to specify models by offering a consistent, flexible framework for routine modeling work.
+
+1. Model specification.
+```{r tidy lm}
+lm_model <- linear_reg() %>% 
+  set_engine("lm")
+
+lm_model
+```
+
+2. Start a workflow, add the model specification, and specify the outcome and predictors.
+```{r workflow}
+lm_wflow <-  workflow() %>%  
+  add_model(lm_model) %>% 
+  add_variables(outcome=day30,predictors=c(age,sex))
+lm_wflow
+```
+
+3. Fit the model with a dataset.
+```{r fit}
+lm_wfit <- fit(lm_wflow,df_gusto)
+lm_wfit
+```
+
+4. Model summary
+```{r }
+extract_fit_engine(lm_wfit)
+
+extract_fit_engine(lm_wfit) %>% 
+  summary()
+
+tidy(lm_wfit)
+```
+
+5. Prediction 
+```{r}
+df_gusto_small <- df_gusto %>% 
+  slice(1:5,490:495)
+
+df_gusto_small %>% 
+  select(day30,age,sex) %>%
+  bind_cols(predict(lm_wfit, df_gusto_small)) %>% 
+  bind_cols(predict(lm_wfit, df_gusto_small,type='pred_int',level=0.95))
+```
+
+The outcome *day30* is binary, so it is inappropriate to use the ordinary regression model. Instead, we should use a logistic regression model. There are two ways to specify the logistic reg model:
+
+1. Logistic regression model specification.
+```{r tidy glm}
+glm_model <- linear_reg() %>% 
+  set_engine("glm",family=binomial(link="logit"))
+glm_model
+
+glm_model <- logistic_reg() %>% 
+  set_engine("glm")
+glm_model
+```
+
+Use the tidymodel workflow.
+```{r}
+glm_wflow <-  workflow() %>%  
+  add_model(glm_model) %>% 
+  add_variables(outcome=day30,predictors=c(age,sex))
+
+glm_wfit <- fit(glm_wflow,df_gusto %>% 
+                  mutate(day30=as.factor(day30)))
+glm_wfit
+
+extract_fit_engine(glm_wfit)
+
+df_gusto_small %>% 
+  select(day30,age,sex) %>%
+  mutate(day30=as.factor(day30)) %>% 
+  bind_cols(predict(glm_wfit, df_gusto_small,type='class')) %>% 
+    bind_cols(predict(glm_wfit, df_gusto_small,type='prob')) 
+```

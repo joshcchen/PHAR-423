@@ -1,0 +1,35 @@
+---
+title: "ELAIA2"
+format: html
+editor: visual
+---
+
+## Research Pitch: Measuring healthcare system burden from AKI patients and its relationship to medical intervention and setting
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+elaia2 <- read.csv("elaia2.csv")
+
+ggplot(elaia2, aes(x=num_provider)) +
+  geom_histogram(binwidth=1) +
+  xlim(0, 30)
+
+
+elaia2_good <- filter(elaia2, composite_outcome=="0")
+ggplot(elaia2_good, aes(x=num_provider)) +
+  geom_histogram() +
+  xlim(0,30)
+
+ggplot(elaia2, aes(x=maxcreat14_post, y=num_provider)) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  labs(title="Total Population")
+
+elaia2_icu <- filter(elaia2, icu_at_rand=="1")
+ggplot(elaia2_icu, aes(x=maxcreat14_post, y=num_provider)) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  labs(title ="ICU Patients")
+```
