@@ -1,3 +1,6 @@
+library(tidyverse)
+df <- read.csv("workshops/data/gusto.csv")
+
 df %>% summarise(mean(age), sd(age), n())
 
 table(df$tx)
@@ -22,6 +25,7 @@ d <- x[2,2]
 RR <- (d/(c+d)) / (b/(a+b))
 OR <- ((a*d)/(b*c))
 
+# 95% CI for OR
 SE_log_OR <- sqrt((1/a) + (1/b) + (1/c) + (1/d))
 
 log_OR <- log(OR)
@@ -32,4 +36,13 @@ ub <- log_OR + 1.96*SE_log_OR
 lb2 <- exp(lb)
 ub2 <- exp(ub)
 
+# 95% CI for RR
+SE_log_RR <- sqrt((1/a) - (1/(a+b)) + (1/c) - (1/(c+d)))
 
+log_RR <- log(RR)
+
+lbRR <- log_RR - 1.96*SE_log_RR
+ubRR <- log_RR + 1.96*SE_log_RR
+
+exp(lbRR)
+exp(ubRR)
