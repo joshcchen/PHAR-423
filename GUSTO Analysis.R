@@ -46,3 +46,63 @@ ubRR <- log_RR + 1.96*SE_log_RR
 
 exp(lbRR)
 exp(ubRR)
+
+# Oct 17
+# Making sex binary Female = 0 Male = 1
+df2 <- df2 %>% mutate(sex2=ifelse(sex=="male",1,0))
+
+#Linear regression model: dependent variable = pulse, independent = sex2 and age
+reg0 <- lm(pulse~sex2+age, data=df2)
+
+#Given the coefficents, sex2 = -2 so controlling for age, males have 2 BPM units lower pulse
+#age = -0.06 so controlling for sex, for every 1 year increase in age pulse decreases by 0.06 BPM
+summary(reg0)
+
+#Are residuals normally distributed?
+hist(reg0$residuals)
+
+#How does the model fit the data?
+
+
+#logistic regression model
+
+#Let's review the logistic function
+x <- seq(from=-10, to=10, by=0.01)
+y <- exp(x)/(1+exp(x))
+plot(x,y,type='l')
+
+#Unadjusted (Note that coefficients are given as ln(OR))
+reg1 <- glm(day30~tx2, data=df2, family=binomial(link="logit"))
+summary(reg1)
+betas <- coefficients(reg1)
+exp(betas[2])
+
+sm <- summary(reg1)
+se <- sm$coefficients[2,2]
+
+CI_lower <- betas[2] - 1.96*se
+CI_upper <- betas[2] + 1.96*se
+
+exp(CI_lower)
+exp(CI_upper)
+
+
+#adjusted
+reg2 <- glm(day30~tx2+age+sex2, data=df2, family=binomial(link="logit"))
+betas2 <- coefficients(reg2)
+
+#Get 95% confidence interval
+CI_lower <- coefficients(reg2)[2] - 1.96*summary(reg2)$coefficients[2,2]
+CI_upper <- coefficients(reg2)[2] + 1.96*summary(reg2)$coefficients[2,2] 
+
+#Make a prediction for a 65 y/o female
+df3 <- df2[1,]
+df3$age <- 65
+df3$sex <- 0
+
+predict(reg2, newdata=df3, type='response')
+
+
+
+
+
